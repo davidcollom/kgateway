@@ -50,8 +50,9 @@ type Options struct {
 	// ExtraAgwPolicyStatusHandlers maps policy kinds to their status sync handlers for AgentGateway
 	ExtraAgwPolicyStatusHandlers map[schema.GroupVersionKind]agwplugins.AgwPolicyStatusSyncHandler
 
-	CommonCollectionsOptions []collections.Option
-	StatusSyncerOptions      []syncer.StatusSyncerOption
+	CommonCollectionsOptions  []collections.Option
+	StatusSyncerOptions       []syncer.StatusSyncerOption
+	AgentGatewaySyncerOptions []syncer.AgentGatewaySyncerOption
 }
 
 func New(opts Options) (setup.Server, error) {
@@ -78,5 +79,6 @@ func New(opts Options) (setup.Server, error) {
 		setup.WithExtraAgwPolicyStatusHandlers(opts.ExtraAgwPolicyStatusHandlers),
 		setup.WithCommonCollectionsOptions(opts.CommonCollectionsOptions),
 		setup.WithStatusSyncerOptions(opts.StatusSyncerOptions),
+		setup.WithAgentGatewaySyncerOptions(opts.AgentGatewaySyncerOptions),
 	)
 }

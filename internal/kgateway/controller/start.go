@@ -101,6 +101,9 @@ type StartConfig struct {
 
 	// StatusSyncerOptions is the list of options to be passed when creating the StatusSyncer
 	StatusSyncerOptions []syncer.StatusSyncerOption
+
+	// AgentGatewaySyncerOptions is the list of options to be passed when creating the AgentGatewaySyncer
+	AgentGatewaySyncerOptions []syncer.AgentGatewaySyncerOption
 }
 
 // Start runs the controllers responsible for processing the K8s Gateway API objects
@@ -221,6 +224,7 @@ func NewControllerBuilder(ctx context.Context, cfg StartConfig) (*ControllerBuil
 			agwMergedPlugins,
 			cfg.AdditionalGatewayClasses,
 			gvks,
+			cfg.AgentGatewaySyncerOptions...,
 		)
 
 		agwSyncer.Init(cfg.KrtOptions.WithPrefix("agentgateway"))

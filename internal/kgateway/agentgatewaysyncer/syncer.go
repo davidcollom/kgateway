@@ -34,6 +34,7 @@ import (
 	"github.com/kgateway-dev/kgateway/v2/pkg/deployer"
 	"github.com/kgateway-dev/kgateway/v2/pkg/logging"
 	"github.com/kgateway-dev/kgateway/v2/pkg/pluginsdk/krtutil"
+	"github.com/kgateway-dev/kgateway/v2/pkg/syncer"
 	krtpkg "github.com/kgateway-dev/kgateway/v2/pkg/utils/krtutil"
 )
 
@@ -67,6 +68,8 @@ type Syncer struct {
 
 	// features
 	Registrations []krtxds.Registration
+
+	gatewayCollectionOptions []translator.GatewayCollectionConfigOption
 }
 
 func NewAgwSyncer(
@@ -77,7 +80,9 @@ func NewAgwSyncer(
 	agwPlugins plugins.AgwPlugin,
 	additionalGatewayClasses map[string]*deployer.GatewayClassInfo,
 	extraGVKs []schema.GroupVersionKind,
+	opts ...syncer.AgentGatewaySyncerOption,
 ) *Syncer {
+	cfg := syncer.ProcessAgentGatewaySyncerOptions(opts...)
 	return &Syncer{
 		agwCollections:           agwCollections,
 		controllerName:           controllerName,
@@ -87,6 +92,9 @@ func NewAgwSyncer(
 		client:                   client,
 		statusCollections:        status.NewStatusCollections(extraGVKs),
 		NackPublisher:            nack.NewPublisher(client),
+
+		gatewayCollectionOptions: []translator.GatewayCollectionConfigOption{
+			translator.WithGatewaysTransformationFunc(cfg.GatewayTransformationFunc)},
 	}
 }
 
@@ -166,16 +174,16 @@ func (s *Syncer) buildGatewayCollection(
 	krt.StatusCollection[*gwv1.Gateway, gwv1.GatewayStatus],
 	krt.Collection[*translator.GatewayListener],
 ) {
-	return translator.GatewayCollection(
-		s.controllerName,
-		s.agwCollections.Gateways,
-		listenerSets,
-		gatewayClasses,
-		s.agwCollections.Namespaces,
-		refGrants,
-		s.agwCollections.Secrets,
-		krtopts,
-	)
+	return translator.GatewayCollection(translator.GatewayCollectionConfig{
+		ControllerName: s.controllerName,
+		Gateways:       s.agwCollections.Gateways,
+		ListenerSets:   listenerSets,
+		GatewayClasses: gatewayClasses,
+		Namespaces:     s.agwCollections.Namespaces,
+		Grants:         refGrants,
+		Secrets:        s.agwCollections.Secrets,
+		KrtOpts:        krtopts,
+	}, s.gatewayCollectionOptions...)
 }
 
 func (s *Syncer) buildListenerSetCollection(
